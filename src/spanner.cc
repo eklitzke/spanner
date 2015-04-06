@@ -9,6 +9,14 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include <boost/program_options.hpp>
+
+#include <iostream>
+
+#include "../config.h"
+
+namespace po = boost::program_options;
+
 
 int cairo_check_event(cairo_surface_t *sfc, int block) {
   char keybuf[8];
@@ -96,17 +104,47 @@ static void turn(double v, double max, double *diff) {
 
 
 int main(int argc, char **argv) {
+  po::options_description general("General options");
+  general.add_options()
+      ("help,h", "produce this help message")
+      ("version", "print the version");
+
+  int pause_millis;
+  int window_size;
+  po::options_description windowopts("Display options");
+  windowopts.add_options()
+      ("window-size", po::value<int>(&window_size)->default_value(500));
+  windowopts.add_options()
+      ("pause-millis", po::value<int>(&pause_millis)->default_value(5));
+
+  po::options_description all("Allowed options");
+  all.add(general).add(windowopts);
+
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).
+            options(all).run(), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    std::cout << all;
+    return 0;
+  }
+  if (vm.count("version")) {
+    std::cout << PACKAGE_STRING << "\n";
+    return 0;
+  }
+
   cairo_surface_t *sfc;
   cairo_t *ctx;
   int x, y;
-  struct timespec ts = {0, 5000000};
+  struct timespec ts = {0, 1000000 * pause_millis};
 
   double x0 = 20, y0 = 20, x1 = 200, y1 = 400, x2 = 450, y2 = 100;
   double dx0 = 1, dx1 = 1.5, dx2 = 2;
   double dy0 = 2, dy1 = 1.5, dy2 = 1;
   int running;
 
-  x = y = 500;
+  x = y = window_size;
   sfc = cairo_create_x11_surface(&x, &y);
   ctx = cairo_create(sfc);
 

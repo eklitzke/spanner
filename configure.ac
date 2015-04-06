@@ -16,6 +16,7 @@ AC_PROG_INSTALL
 
 AC_CHECK_LIB(cairo, main, [], [AC_MSG_ERROR([missing cairo])])
 AC_CHECK_LIB(X11, main, [], [AC_MSG_ERROR([missing X11])])
+AC_CHECK_LIB(boost_program_options, main, [], [AC_MSG_ERROR([missing boost_program_options])])
 
 # options
 AC_ARG_ENABLE(debug,
