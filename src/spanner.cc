@@ -10,8 +10,7 @@
 #include <time.h>
 
 
-int cairo_check_event(cairo_surface_t *sfc, int block)
-{
+int cairo_check_event(cairo_surface_t *sfc, int block) {
   char keybuf[8];
   KeySym key;
   XEvent e;
@@ -36,8 +35,7 @@ int cairo_check_event(cairo_surface_t *sfc, int block)
 }
 
 
-static void fullscreen(Display* dpy, Window win)
-{
+static void fullscreen(Display* dpy, Window win) {
   Atom atoms[2] = { XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False), None };
   XChangeProperty(dpy, win, XInternAtom(dpy, "_NET_WM_STATE", False),
                   XA_ATOM, 32, PropModeReplace, (unsigned char*) atoms, 1);
@@ -52,8 +50,7 @@ static void fullscreen(Display* dpy, Window win)
  * @return Returns a pointer to a valid Xlib cairo surface. The function does
  * not return on error (exit(3)).
  */
-cairo_surface_t *cairo_create_x11_surface(int *x, int *y)
-{
+cairo_surface_t *cairo_create_x11_surface(int *x, int *y) {
   Display *dsp;
   Drawable da;
   Screen *scr;
@@ -64,8 +61,7 @@ cairo_surface_t *cairo_create_x11_surface(int *x, int *y)
     exit(1);
   screen = DefaultScreen(dsp);
   scr = DefaultScreenOfDisplay(dsp);
-  if (!*x || !*y)
-  {
+  if (!*x || !*y) {
     *x = WidthOfScreen(scr), *y = HeightOfScreen(scr);
     da = XCreateSimpleWindow(dsp, DefaultRootWindow(dsp), 0, 0, *x, *y, 0, 0, 0);
     fullscreen (dsp, da);
@@ -84,8 +80,7 @@ cairo_surface_t *cairo_create_x11_surface(int *x, int *y)
 
 /*! Destroy cairo Xlib surface and close X connection.
  */
-void cairo_close_x11_surface(cairo_surface_t *sfc)
-{
+void cairo_close_x11_surface(cairo_surface_t *sfc) {
   Display *dsp = cairo_xlib_surface_get_display(sfc);
 
   cairo_surface_destroy(sfc);
@@ -93,15 +88,14 @@ void cairo_close_x11_surface(cairo_surface_t *sfc)
 }
 
 
-static void turn(double v, double max, double *diff)
-{
-  if (v <= 0 || v >= max)
+static void turn(double v, double max, double *diff) {
+  if (v <= 0 || v >= max) {
     *diff *= -1.0;
+  }
 }
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   cairo_surface_t *sfc;
   cairo_t *ctx;
   int x, y;
@@ -163,8 +157,7 @@ int main(int argc, char **argv)
     turn(y1, y, &dy1);
     turn(y2, y, &dy2);
 
-    switch (cairo_check_event(sfc, 0))
-    {
+    switch (cairo_check_event(sfc, 0)) {
       case 0xff53:   // right cursor
         dx0 *= 2.0;
         dy0 *= 2.0;
