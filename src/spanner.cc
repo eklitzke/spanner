@@ -101,6 +101,7 @@ void cairo_close_x11_surface(cairo_surface_t *sfc) {
 
 
 int main(int argc, char **argv) {
+  std::cout.sync_with_stdio(false);
   po::options_description general("General options");
   general.add_options()
       ("help,h", "produce this help message")
@@ -158,7 +159,10 @@ int main(int argc, char **argv) {
     Particle p{{0, 0}, {0, 0}, vm["sun-mass"].as<double>()};
     particles.push_back(p);
     for (int i = 0; i < num_particles; i++) {
-      Particle p{{3 * dist(engine), 3 * dist(engine)}, {0, 0}, 1};
+      Particle p{
+        {3 * dist(engine), 3 * dist(engine)},
+        {3 * dist(engine), 3 * dist(engine)},
+            1};
       particles.push_back(p);
     }
   }
@@ -204,7 +208,9 @@ int main(int argc, char **argv) {
       double px = p.position().x();
       double py = p.position().y();
       cairo_user_to_device(ctx, &px, &py);
-      std::cout << "position = " << p.position() << ", device coordinates are "
+      std::cout << "position = " << p.position() << ", "
+                << "velocity = " << p.velocity() << ", "
+                << "device coordinates are "
                 << "(" << px << ", " << py << ")\n";
 #endif
 
