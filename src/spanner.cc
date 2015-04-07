@@ -177,9 +177,12 @@ int main(int argc, char **argv) {
   std::cout << "center is " << cx << " " << cy << std::endl;
 #endif
 
+  struct timespec sleep_time;
+  struct timeval tv_start, tv_end, tv_diff1, tv_diff2;
+  struct timeval goal { 0, pause_millis * 1000 };
 
   for (running = 1; running;) {
-    const struct timespec ts = {0, 1000000 * pause_millis};
+    gettimeofday(&tv_start, nullptr);
     const double timescale = pause_millis / 1000.0;
 
     for (Particle &p : particles) {
@@ -247,7 +250,15 @@ int main(int argc, char **argv) {
         break;
     }
 
-    nanosleep(&ts, NULL);
+    // calculate how long to sleep, and nanosleep for that long
+    gettimeofday(&tv_end, nullptr);
+    timersub(&tv_end, &tv_start, &tv_diff1);
+    timersub(&goal, &tv_diff1, &tv_diff2);
+    if (tv_diff2.tv_sec >= 0 && tv_diff2.tv_usec >= 0) {
+      sleep_time.tv_sec = tv_diff2.tv_sec;
+      sleep_time.tv_nsec = tv_diff2.tv_usec * 1000;
+      nanosleep(&sleep_time, NULL);
+    }
   }
 
   cairo_destroy(ctx);
