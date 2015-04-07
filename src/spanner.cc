@@ -77,9 +77,10 @@ cairo_surface_t *cairo_create_x11_surface(int *x, int *y) {
     *x = WidthOfScreen(scr), *y = HeightOfScreen(scr);
     da = XCreateSimpleWindow(dsp, DefaultRootWindow(dsp), 0, 0, *x, *y, 0, 0, 0);
     fullscreen (dsp, da);
-  }
-  else
+  } else {
     da = XCreateSimpleWindow(dsp, DefaultRootWindow(dsp), 0, 0, *x, *y, 0, 0, 0);
+  }
+  XStoreName(dsp, da, "n-Body Simulator");
   XSelectInput(dsp, da, ButtonPressMask | KeyPressMask);
   XMapWindow(dsp, da);
 
