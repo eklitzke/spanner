@@ -111,6 +111,7 @@ int main(int argc, char **argv) {
   int window_size;
   int num_particles;
   double gravity;
+  double time_scale = 1.0;
   po::options_description windowopts("Display options");
   windowopts.add_options()
       ("window-size", po::value<int>(&window_size)->default_value(1000));
@@ -183,7 +184,7 @@ int main(int argc, char **argv) {
 
   for (running = 1; running;) {
     gettimeofday(&tv_start, nullptr);
-    const double timescale = pause_millis / 1000.0;
+    const double timescale = time_scale * pause_millis / 1000.0;
 
     for (Particle &p : particles) {
       p.zero_force();
@@ -234,13 +235,11 @@ int main(int argc, char **argv) {
 
     switch (cairo_check_event(sfc, 0)) {
       case 0xff53:   // right cursor
-        if (pause_millis > 1) {
-          pause_millis -= 1;
-        }
+        time_scale *= 1.1;
         break;
 
       case 0xff51:   // left cursor
-        pause_millis++;
+        time_scale /= 1.1;
         break;
 
       case 'q':
