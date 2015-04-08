@@ -10,7 +10,7 @@ std::vector<Particle> create_world(int num_particles) {
   std::uniform_real_distribution<double> dist(-1, 1);
 
   float h = 0;
-  float hue_increment = 360.0f / num_particles;
+  float hue_increment = 360.f / num_particles;
 
   Vec pos_sum = Vec::Zero();
   Vec velocity_sum = Vec::Zero();
@@ -30,7 +30,8 @@ std::vector<Particle> create_world(int num_particles) {
   Particle p(
       -pos_sum,
       -velocity_sum,
-      1);
+      1,
+      HSVtoColor(h, 1, 1));
   particles.push_back(p);
   return particles;
 }

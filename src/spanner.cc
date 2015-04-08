@@ -22,6 +22,18 @@ void scale(cairo_t *ctx, int window_size, double scale_factor) {
 }
 
 
+void draw_crosshair(cairo_t *ctx) {
+    cairo_set_line_width(ctx, 0.01);
+    cairo_set_source_rgb(ctx, 0, 0, 0);
+    cairo_move_to(ctx, 0, 0.1);
+    cairo_line_to(ctx, 0, -0.1);
+    cairo_stroke(ctx);
+    cairo_move_to(ctx, -0.1, 0);
+    cairo_line_to(ctx, 0.1, 0);
+    cairo_stroke(ctx);
+}
+
+
 int main(int argc, char **argv) {
   std::cout.sync_with_stdio(false);
   po::options_description general("General options");
@@ -85,56 +97,19 @@ int main(int argc, char **argv) {
     gettimeofday(&tv_start, nullptr);
     const double timescale = time_scale * pause_millis / 1000.0;
 
-    for (Particle &p : particles) {
-      p.zero_force();
-      for (const Particle &o : particles) {
-        p.augment_force(gravity, o);
-      }
-    }
-    for (Particle &p : particles) {
-      p.augment_velocity(timescale);
-      p.augment_position(timescale);
-#if 0
-      double x = p.position().x();
-      double y = p.position().y();
-      cairo_user_to_device(ctx, &x, &y);
-#endif
-    }
+    move_particles(&particles, gravity, timescale);
 
     cairo_push_group(ctx);
+
+    // draw the blank white background
     cairo_set_source_rgb(ctx, 1, 1, 1);
     cairo_paint(ctx);
 
-    cairo_set_source_rgb(ctx, 0, 0, 0);
-    for (const Particle &p : particles) {
-#if 0
-      double px = p.position().x();
-      double py = p.position().y();
-      cairo_user_to_device(ctx, &px, &py);
-      std::cout << "position = " << p.position() << ", "
-                << "velocity = " << p.velocity() << ", "
-                << "device coordinates are "
-                << "(" << px << ", " << py << ")\n";
-#endif
+    // draw the crosshair
+    draw_crosshair(ctx);
 
-      cairo_set_source_rgb(ctx, 0, 0, 0);
-      cairo_arc(ctx,
-                p.position().x(),
-                p.position().y(),
-                sqrt(p.mass()) * 0.03,
-                0,
-                2 * M_PI);
-      cairo_set_line_width(ctx, 0.01);
-      cairo_stroke_preserve(ctx);
-
-      cairo_set_source_rgb(
-          ctx,
-          p.color().r(),
-          p.color().g(),
-          p.color().b());
-      cairo_fill(ctx);
-
-    }
+    // draw the particles
+    draw_particles(ctx, particles);
 
     cairo_pop_group_to_source(ctx);
     cairo_paint(ctx);

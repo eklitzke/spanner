@@ -3,6 +3,7 @@
 #ifndef SPANNER_PARTICLE_H_
 #define SPANNER_PARTICLE_H_
 
+#include <cairo/cairo.h>
 #include <eigen3/Eigen/Dense>
 
 #include <iostream>
@@ -65,5 +66,13 @@ class Particle {
   double mass_;
   Color color_;
 };
+
+
+void move_particles(std::vector<Particle> *particles,
+                    double gravity,
+                    double timescale);
+
+void draw_particles(cairo_t *ctx, const std::vector<Particle> &particles);
+
 
 #endif  // SPANNER_PARTICLE_H_
