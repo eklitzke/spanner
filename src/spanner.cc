@@ -4,15 +4,22 @@
 #include <boost/program_options.hpp>
 
 #include <iostream>
-#include <random>
 #include <vector>
 
 #include "../config.h"
 #include "./particle.h"
+#include "./physics.h"
 #include "./x11.h"
 
 namespace po = boost::program_options;
 
+
+void scale(cairo_t *ctx, int window_size, double scale_factor) {
+  cairo_identity_matrix(ctx);  // reset the CTM
+  const double s = window_size / (scale_factor * 2);
+  cairo_scale(ctx, s, s);
+  cairo_translate(ctx, scale_factor, scale_factor);
+}
 
 
 int main(int argc, char **argv) {
@@ -25,6 +32,7 @@ int main(int argc, char **argv) {
   int pause_millis;
   int window_size;
   int num_particles;
+  double scale_factor = 2;
   double gravity;
   double time_scale = 1.0;
   po::options_description windowopts("Display options");
@@ -36,15 +44,13 @@ int main(int argc, char **argv) {
       ("n,num-particles", po::value<int>(&num_particles)->default_value(3));
   windowopts.add_options()
       ("g,gravity", po::value<double>(&gravity)->default_value(1));
-  windowopts.add_options()
-      ("sun-mass", po::value<double>()->default_value(10));
 
   po::options_description all("Allowed options");
   all.add(general).add(windowopts);
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).
-	    options(all).run(), vm);
+            options(all).run(), vm);
   po::notify(vm);
 
   if (vm.count("help")) {
@@ -56,36 +62,14 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  cairo_surface_t *sfc;
-  cairo_t *ctx;
-  int x, y;
+  int x = window_size;
+  int y = window_size;
+  cairo_surface_t *sfc = cairo_create_x11_surface(&x, &y);
+  cairo_t *ctx = cairo_create(sfc);
 
-  int running;
+  scale(ctx, window_size, scale_factor);
 
-  x = y = window_size;
-  sfc = cairo_create_x11_surface(&x, &y);
-  ctx = cairo_create(sfc);
-
-  std::vector<Particle> particles;
-  {
-    std::random_device rd;
-    std::mt19937 engine(rd());
-    std::uniform_real_distribution<double> dist(-1, 1);
-
-    Particle p{{0, 0}, {0, 0}, vm["sun-mass"].as<double>()};
-    particles.push_back(p);
-    for (int i = 0; i < num_particles; i++) {
-      Particle p{
-	{3 * dist(engine), 3 * dist(engine)},
-	{3 * dist(engine), 3 * dist(engine)},
-	    1};
-      particles.push_back(p);
-    }
-  }
-
-  cairo_scale(ctx, window_size / 8, window_size / 8);
-  cairo_translate(ctx, 4, 4);
-
+  std::vector<Particle> particles = create_world(num_particles);
 #if 0
   double cx = 0;
   double cy = 0;
@@ -97,24 +81,24 @@ int main(int argc, char **argv) {
   struct timeval tv_start, tv_end, tv_diff1, tv_diff2;
   struct timeval goal { 0, pause_millis * 1000 };
 
-  for (running = 1; running;) {
+  for (int running = 1; running;) {
     gettimeofday(&tv_start, nullptr);
     const double timescale = time_scale * pause_millis / 1000.0;
 
     for (Particle &p : particles) {
       p.zero_force();
-      if (p.mass() == 1) {
-	for (const Particle &o : particles) {
-	  p.augment_force(gravity, o);
-	}
+      for (const Particle &o : particles) {
+        p.augment_force(gravity, o);
       }
     }
     for (Particle &p : particles) {
       p.augment_velocity(timescale);
       p.augment_position(timescale);
+#if 0
       double x = p.position().x();
       double y = p.position().y();
       cairo_user_to_device(ctx, &x, &y);
+#endif
     }
 
     cairo_push_group(ctx);
@@ -128,20 +112,28 @@ int main(int argc, char **argv) {
       double py = p.position().y();
       cairo_user_to_device(ctx, &px, &py);
       std::cout << "position = " << p.position() << ", "
-		<< "velocity = " << p.velocity() << ", "
-		<< "device coordinates are "
-		<< "(" << px << ", " << py << ")\n";
+                << "velocity = " << p.velocity() << ", "
+                << "device coordinates are "
+                << "(" << px << ", " << py << ")\n";
 #endif
 
+      cairo_set_source_rgb(ctx, 0, 0, 0);
       cairo_arc(ctx,
-		p.position().x(),
-		p.position().y(),
-		sqrt(p.mass()) * 0.03,
-		0,
-		2 * M_PI);
-
+                p.position().x(),
+                p.position().y(),
+                sqrt(p.mass()) * 0.03,
+                0,
+                2 * M_PI);
       cairo_set_line_width(ctx, 0.01);
-      cairo_stroke(ctx);
+      cairo_stroke_preserve(ctx);
+
+      cairo_set_source_rgb(
+          ctx,
+          p.color().r(),
+          p.color().g(),
+          p.color().b());
+      cairo_fill(ctx);
+
     }
 
     cairo_pop_group_to_source(ctx);
@@ -150,18 +142,29 @@ int main(int argc, char **argv) {
 
     switch (cairo_check_event(sfc, 0)) {
       case 0xff53:   // right cursor
-	time_scale *= 1.1;
-	break;
+        time_scale *= 1.1;
+        break;
 
       case 0xff51:   // left cursor
-	time_scale /= 1.1;
-	break;
+        time_scale /= 1.1;
+        break;
+
+      case '-':
+        scale_factor *= 1.1;
+        scale(ctx, window_size, scale_factor);
+        break;
+
+      case '+':
+      case '=':
+        scale_factor /= 1.1;
+        scale(ctx, window_size, scale_factor);
+        break;
 
       case 'q':
       case 0xff1b:   // Esc
       case -1:       // left mouse button
-	running = 0;
-	break;
+        running = 0;
+        break;
     }
 
     // calculate how long to sleep, and nanosleep for that long

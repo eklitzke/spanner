@@ -7,6 +7,7 @@
 
 #include <iostream>
 
+#include "./color.h"
 
 typedef Eigen::Vector2d Vec;
 
@@ -17,15 +18,25 @@ class Particle {
       :position_(position),
        velocity_(velocity),
        mass_(mass) {}
+  Particle(const Vec &position, const Vec &velocity, double mass, Color color)
+      :position_(position),
+       velocity_(velocity),
+       mass_(mass),
+       color_(color) {}
 
   inline const Vec& position() const { return position_; }
   inline const Vec& velocity() const { return velocity_; }
   inline const Vec& force() const { return force_; }
 
+  inline const Color& color() const { return color_; }
+
   inline double mass() const { return mass_; }
+  inline double momentum() const {
+    return mass_ * velocity_.norm();
+  }
 
   void zero_force() {
-    force_ -= force_;
+    force_ = Vec::Zero();
   }
 
   void augment_force(double g, const Particle &other) {
@@ -52,6 +63,7 @@ class Particle {
   Vec velocity_;
   Vec force_;
   double mass_;
+  Color color_;
 };
 
 #endif  // SPANNER_PARTICLE_H_
