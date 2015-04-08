@@ -14,6 +14,7 @@
 namespace po = boost::program_options;
 
 
+// scale the entire display
 void scale(cairo_t *ctx, int window_size, double scale_factor) {
   cairo_identity_matrix(ctx);  // reset the CTM
   const double s = window_size / (scale_factor * 2);
@@ -22,14 +23,15 @@ void scale(cairo_t *ctx, int window_size, double scale_factor) {
 }
 
 
+// draw the crosshair
 void draw_crosshair(cairo_t *ctx) {
-    cairo_set_line_width(ctx, 0.01);
+    cairo_set_line_width(ctx, 0.05);
     cairo_set_source_rgb(ctx, 0, 0, 0);
-    cairo_move_to(ctx, 0, 0.1);
-    cairo_line_to(ctx, 0, -0.1);
+    cairo_move_to(ctx, 0, 0.3);
+    cairo_line_to(ctx, 0, -0.3);
     cairo_stroke(ctx);
-    cairo_move_to(ctx, -0.1, 0);
-    cairo_line_to(ctx, 0.1, 0);
+    cairo_move_to(ctx, -0.3, 0);
+    cairo_line_to(ctx, 0.3, 0);
     cairo_stroke(ctx);
 }
 
@@ -44,7 +46,7 @@ int main(int argc, char **argv) {
   int pause_millis;
   int window_size;
   int num_particles;
-  double scale_factor = 2;
+  double scale_factor = 4;
   double gravity;
   double time_scale = 1.0;
   po::options_description windowopts("Display options");
@@ -79,15 +81,7 @@ int main(int argc, char **argv) {
   cairo_surface_t *sfc = cairo_create_x11_surface(&x, &y);
   cairo_t *ctx = cairo_create(sfc);
 
-  scale(ctx, window_size, scale_factor);
-
   std::vector<Particle> particles = create_world(num_particles);
-#if 0
-  double cx = 0;
-  double cy = 0;
-  cairo_user_to_device(ctx, &cx, &cy);
-  std::cout << "center is " << cx << " " << cy << std::endl;
-#endif
 
   struct timespec sleep_time;
   struct timeval tv_start, tv_end, tv_diff1, tv_diff2;
@@ -106,10 +100,12 @@ int main(int argc, char **argv) {
     cairo_paint(ctx);
 
     // draw the crosshair
+    //scale(ctx, window_size, 2);
+    scale(ctx, window_size, scale_factor);
     draw_crosshair(ctx);
 
     // draw the particles
-    draw_particles(ctx, particles);
+    draw_particles(ctx, particles, scale_factor);
 
     cairo_pop_group_to_source(ctx);
     cairo_paint(ctx);
@@ -126,13 +122,11 @@ int main(int argc, char **argv) {
 
       case '-':
         scale_factor *= 1.1;
-        scale(ctx, window_size, scale_factor);
         break;
 
       case '+':
       case '=':
         scale_factor /= 1.1;
-        scale(ctx, window_size, scale_factor);
         break;
 
       case 'q':

@@ -16,16 +16,18 @@ void move_particles(std::vector<Particle> *particles,
 }
 
 
-void draw_particles(cairo_t *ctx, const std::vector<Particle> &particles) {
+void draw_particles(cairo_t *ctx,
+                    const std::vector<Particle> &particles,
+                    double scale_factor) {
   for (const Particle &p : particles) {
       cairo_set_source_rgb(ctx, 0, 0, 0);
       cairo_arc(ctx,
                 p.position().x(),
                 p.position().y(),
-                sqrt(p.mass()) * 0.03,
+                sqrt(p.mass()) * 0.01 * scale_factor,
                 0,
                 2 * M_PI);
-      cairo_set_line_width(ctx, 0.01);
+      cairo_set_line_width(ctx, 0.01 * scale_factor);
       cairo_stroke_preserve(ctx);
 
       cairo_set_source_rgb(

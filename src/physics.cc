@@ -16,8 +16,8 @@ std::vector<Particle> create_world(int num_particles) {
   Vec velocity_sum = Vec::Zero();
   for (int i = 0; i < num_particles - 1; i++) {
     Particle p(
-        {dist(engine), dist(engine)},
-        {dist(engine), dist(engine)},
+        {2 * dist(engine), 2 * dist(engine)},
+        {2 * dist(engine), 2 * dist(engine)},
         1,
         HSVtoColor(h, 1, 1));
 

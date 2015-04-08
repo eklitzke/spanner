@@ -72,7 +72,9 @@ void move_particles(std::vector<Particle> *particles,
                     double gravity,
                     double timescale);
 
-void draw_particles(cairo_t *ctx, const std::vector<Particle> &particles);
+void draw_particles(cairo_t *ctx,
+                    const std::vector<Particle> &particles,
+                    double scale_factor);
 
 
 #endif  // SPANNER_PARTICLE_H_
