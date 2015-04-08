@@ -3,9 +3,12 @@
 #ifndef SPANNER_PARTICLE_H_
 #define SPANNER_PARTICLE_H_
 
-#include "./vec.h"
+#include <eigen3/Eigen/Dense>
 
 #include <iostream>
+
+
+typedef Eigen::Vector2d Vec;
 
 class Particle {
  public:
@@ -22,27 +25,26 @@ class Particle {
   inline double mass() const { return mass_; }
 
   void zero_force() {
-    force_.zero();
+    force_ -= force_;
   }
 
   void augment_force(double g, const Particle &other) {
-    Vec heading = other.position_.difference(position_);
-    if (heading.is_zero()) {
+    Vec heading = other.position_ - position_;
+    if (heading.isZero()) {
       return;
     }
-    double magnitude = (
-        g * mass_ * other.mass_ / position_.dist_sq(other.position_));
-    heading.scale(magnitude);
-    force_.augment(heading);
+    double magnitude = g * mass_ * other.mass_ / heading.squaredNorm();
+    heading *= magnitude;
+    force_ += heading;
   }
 
   void augment_velocity(double timescale) {
-    force_.scale(timescale);
-    velocity_.augment(force_);
+    force_ *= timescale;
+    velocity_ += force_;
   }
 
   void augment_position(double timescale) {
-    position_.augment({velocity_.x() * timescale, velocity_.y() * timescale});
+    position_ += (velocity_ * timescale);
   }
 
  private:
